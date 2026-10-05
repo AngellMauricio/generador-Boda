@@ -2,7 +2,6 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <!-- Meta tag crucial para móviles -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Generador de Pases de Boda</title>
     
@@ -43,7 +42,6 @@
             transition: all 0.2s ease;
         }
 
-        /* Hover desactivado en móviles por naturaleza, pero activo en PC */
         @media (hover: hover) {
             .pass-card:hover {
                 box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
@@ -55,13 +53,11 @@
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-        /* ESCALADO INTELIGENTE PARA PANTALLAS MÓVILES */
-        /* Si la pantalla es menor a 500px, encogemos visualmente el pase pero conservamos su medida de impresión */
         @media (max-width: 500px) {
             .card-wrapper {
                 transform: scale(0.85);
                 transform-origin: top center;
-                margin-bottom: -1cm; /* Compensa el espacio sobrante del escalado */
+                margin-bottom: -1cm; 
             }
         }
         @media (max-width: 400px) {
@@ -70,3 +66,290 @@
                 transform-origin: top center;
                 margin-bottom: -1.9cm;
             }
+        }
+        @media (max-width: 350px) {
+            .card-wrapper {
+                transform: scale(0.65);
+                transform-origin: top center;
+                margin-bottom: -2.4cm;
+            }
+        }
+
+        @media print {
+            body { background-color: white !important; margin: 0; padding: 0; }
+            body > *:not(main) { display: none !important; }
+            main { padding: 0 !important; margin: 0 !important; background: white !important; overflow: visible !important; }
+            #emptyState { display: none !important; }
+            #passes-container { display: block !important; }
+            
+            .card-wrapper { display: none !important; }
+            .card-actions { display: none !important; }
+            
+            .card-wrapper.print-target { 
+                display: block !important; 
+                transform: none !important; 
+                margin: 0 !important;
+            }
+            .card-wrapper.print-target .pass-card {
+                display: flex !important;
+                position: absolute;
+                left: 0;
+                top: 0;
+                margin: 0 !important;
+                border: none !important;
+                box-shadow: none !important;
+                page-break-after: avoid;
+                page-break-before: avoid;
+            }
+
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            @page {
+                size: 11.5cm 7cm; 
+                margin: 0mm;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen w-full flex flex-col md:flex-row bg-stone-100 font-sans">
+
+    <aside class="w-full md:w-80 bg-white shadow-xl z-20 flex flex-col no-print flex-shrink-0 border-b md:border-b-0 md:border-r border-stone-200 md:h-screen md:sticky md:top-0">
+        <div class="p-5 md:p-6 border-b border-stone-100 bg-stone-50/50">
+            <h1 class="text-2xl md:text-3xl font-cursive font-bold text-wine">Pases de Boda</h1>
+            <p class="text-[0.65rem] text-stone-500 mt-1 uppercase tracking-widest font-semibold font-serif">Panel Generador</p>
+        </div>
+
+        <div class="p-5 md:p-6 flex-1 flex flex-col gap-4 md:gap-5 overflow-y-auto max-h-[50vh] md:max-h-none">
+            <div id="toast" class="absolute top-4 left-6 right-6 bg-red-100 border border-red-200 text-red-700 px-3 py-2 rounded text-xs font-serif font-bold text-center opacity-0 transition-opacity duration-300 pointer-events-none">
+                Ingrese el nombre del invitado
+            </div>
+
+            <div>
+                <label for="guestName" class="block text-[10px] md:text-xs font-bold text-stone-700 mb-1 md:mb-2 font-serif tracking-wider uppercase">Nombre del Invitado</label>
+                <input type="text" id="guestName" 
+                    class="w-full px-3 py-2 md:py-2.5 border border-stone-300 rounded focus:ring-1 focus:ring-wine focus:border-wine outline-none transition-colors font-serif text-sm"
+                    placeholder="Ej. Familia Hernández" autocomplete="off">
+            </div>
+
+            <div>
+                <label for="companionCount" class="block text-[10px] md:text-xs font-bold text-stone-700 mb-1 md:mb-2 font-serif tracking-wider uppercase">Número de Acompañantes</label>
+                <input type="number" id="companionCount" value="0" min="0"
+                    class="w-full px-3 py-2 md:py-2.5 border border-stone-300 rounded focus:ring-1 focus:ring-wine focus:border-wine outline-none transition-colors font-serif text-sm">
+            </div>
+
+            <button id="btnAdd" class="w-full bg-wine hover:bg-[#5a252b] text-white font-serif tracking-widest text-xs md:text-sm font-bold py-3 px-4 rounded shadow-md transition-all flex items-center justify-center gap-2 mt-1 md:mt-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                GENERAR TARJETA
+            </button>
+            
+            <p class="text-[10px] text-stone-400 mt-2 md:mt-auto text-center hidden md:block">Pasa el cursor sobre la tarjeta a la derecha para descargar su PDF.</p>
+        </div>
+    </aside>
+
+    <main class="flex-1 bg-stone-200/50 p-4 md:p-8 min-h-[50vh] md:h-screen md:overflow-y-auto">
+        
+        <div id="emptyState" class="h-full flex flex-col items-center justify-center text-stone-400 py-10 no-print">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 md:h-16 md:w-16 mb-4 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            </svg>
+            <p class="font-serif tracking-widest text-[10px] md:text-sm text-stone-500">AÑADE PASES PARA COMENZAR</p>
+        </div>
+
+        <div id="passes-container" class="flex flex-wrap gap-4 md:gap-6 items-start justify-center">
+            <!-- Pases generados dinámicamente -->
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const btnAdd = document.getElementById('btnAdd');
+            const guestNameInput = document.getElementById('guestName');
+            const companionCountInput = document.getElementById('companionCount');
+            const container = document.getElementById('passes-container');
+            const emptyState = document.getElementById('emptyState');
+            const toast = document.getElementById('toast');
+
+            const showToast = (msg) => {
+                toast.textContent = msg;
+                toast.style.opacity = '1';
+                setTimeout(() => { toast.style.opacity = '0'; }, 3000);
+            };
+
+            const updateEmptyState = () => {
+                emptyState.style.display = container.children.length === 0 ? 'flex' : 'none';
+            };
+
+            btnAdd.addEventListener('click', () => {
+                const rawName = guestNameInput.value.trim();
+                const count = parseInt(companionCountInput.value) || 0;
+
+                if (!rawName) {
+                    showToast('Por favor, ingresa el nombre del invitado.');
+                    guestNameInput.focus();
+                    return;
+                }
+
+                let guestSectionHTML = `
+                    <div class="flex flex-col items-center w-full mt-2">
+                        <span class="font-serif text-wine text-[8.5px] uppercase tracking-[0.15em] leading-tight mb-1">PASE PARA:</span>
+                        <span class="font-cursive text-wine text-[44px] text-center w-full block whitespace-nowrap overflow-visible leading-none">${rawName}</span>
+                        ${count > 0 ? `<span class="font-serif text-wine text-[8px] tracking-[0.1em] uppercase leading-tight mt-1.5">Y ${count} ACOMPAÑANTES</span>` : `<span class="opacity-0 text-[8px] leading-tight mt-1.5">-</span>`}
+                    </div>
+                `;
+
+                const wrapper = document.createElement('div');
+                wrapper.className = 'card-wrapper w-full md:w-auto flex justify-center';
+                wrapper.dataset.guestname = rawName;
+
+                const card = document.createElement('div');
+                card.className = 'pass-card bg-cream group mx-auto';
+                
+                card.innerHTML = `
+                    <div class="card-actions absolute top-2 right-2 flex flex-col gap-1.5 z-50 no-print opacity-100 md:opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                        <button onclick="downloadPassNatively(this)" title="Descargar como PDF" class="bg-white border border-stone-200 p-2 md:p-1.5 rounded-full shadow-md md:shadow-sm hover:bg-stone-50 hover:text-wine text-stone-500 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 md:h-3.5 md:w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                        </button>
+                        <button onclick="deletePass(this)" title="Eliminar" class="bg-white border border-stone-200 p-2 md:p-1.5 rounded-full shadow-md md:shadow-sm hover:bg-red-50 hover:text-red-500 text-stone-500 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 md:h-3.5 md:w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                    </div>
+
+                    <div class="h-full w-[45%] flex items-end justify-start pl-2 overflow-hidden pointer-events-none">
+                        <svg viewBox="0 0 300 380" class="w-full h-full text-wine mt-2" preserveAspectRatio="xMinYMax meet">
+                            <g stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M 60,390 C 70,250 80,180 90,80" stroke-width="2.5" />
+                                <path d="M 75,260 C 60,250 40,210 40,210 C 50,230 65,245 75,260 Z" fill="currentColor" stroke-width="1"/>
+                                <path d="M 85,150 C 100,140 115,110 115,110 C 105,125 95,140 85,150 Z" fill="currentColor" stroke-width="1"/>
+                                <circle cx="90" cy="80" r="5" fill="currentColor" stroke="none" />
+                                <path d="M 90,75 L 90,62 M 90,85 L 90,98 M 85,80 L 72,80 M 95,80 L 108,80" stroke-width="2"/>
+                                <path d="M 87,77 L 78,68 M 93,83 L 102,92 M 87,83 L 78,92 M 93,77 L 102,68" stroke-width="2"/>
+                                <path d="M 89,76 L 84,65 M 91,84 L 96,95 M 86,81 L 75,86 M 94,79 L 105,74" stroke-width="1.5"/>
+                                <path d="M 91,76 L 96,65 M 89,84 L 84,95 M 94,81 L 105,86 M 86,79 L 75,74" stroke-width="1.5"/>
+                                <circle cx="90" cy="58" r="1.5" fill="currentColor" stroke="none" />
+                                <circle cx="106" cy="64" r="1.5" fill="currentColor" stroke="none" />
+                                <circle cx="112" cy="80" r="1.5" fill="currentColor" stroke="none" />
+                                <circle cx="106" cy="96" r="1.5" fill="currentColor" stroke="none" />
+                                <circle cx="90" cy="102" r="1.5" fill="currentColor" stroke="none" />
+                                <circle cx="74" cy="96" r="1.5" fill="currentColor" stroke="none" />
+                                <circle cx="68" cy="80" r="1.5" fill="currentColor" stroke="none" />
+                                <circle cx="74" cy="64" r="1.5" fill="currentColor" stroke="none" />
+                                <path d="M 75,390 C 85,250 120,170 140,50" stroke-width="3" />
+                                <path d="M 95,290 C 120,280 135,240 135,240 C 120,260 105,275 95,290 Z" fill="currentColor" stroke-width="1"/>
+                                <path d="M 125,160 C 100,150 85,110 85,110 C 100,130 115,145 125,160 Z" fill="currentColor" stroke-width="1"/>
+                                <circle cx="140" cy="50" r="7.2" fill="currentColor" stroke="none" />
+                                <path d="M 140,42.8 L 140,26 M 140,57.2 L 140,74 M 132.8,50 L 116,50 M 147.2,50 L 164,50" stroke-width="2.4"/>
+                                <path d="M 135.2,45.2 L 122,32 M 144.8,54.8 L 158,68 M 135.2,54.8 L 122,68 M 144.8,45.2 L 158,32" stroke-width="2.4"/>
+                                <path d="M 137.6,44 L 130.4,28.4 M 142.4,56 L 149.6,71.6 M 134,52.4 L 118.4,59.6 M 146,47.6 L 161.6,40.4" stroke-width="1.8"/>
+                                <path d="M 142.4,44 L 149.6,28.4 M 137.6,56 L 130.4,71.6 M 146,52.4 L 161.6,59.6 M 134,47.6 L 118.4,40.4" stroke-width="1.8"/>
+                                <path d="M 138.8,44 L 136.4,26 M 141.2,44 L 143.6,26 M 134,48.8 L 116,46.4 M 134,51.2 L 116,53.6" stroke-width="1.2"/>
+                                <path d="M 141.2,56 L 143.6,74 M 138.8,56 L 136.4,74 M 146,51.2 L 164,53.6 M 146,48.8 L 164,46.4" stroke-width="1.2"/>
+                                <circle cx="140" cy="21.2" r="1.8" fill="currentColor" stroke="none" />
+                                <circle cx="160.4" cy="29.6" r="1.8" fill="currentColor" stroke="none" />
+                                <circle cx="168.8" cy="50" r="1.8" fill="currentColor" stroke="none" />
+                                <circle cx="160.4" cy="70.4" r="1.8" fill="currentColor" stroke="none" />
+                                <circle cx="140" cy="78.8" r="1.8" fill="currentColor" stroke="none" />
+                                <circle cx="119.6" cy="70.4" r="1.8" fill="currentColor" stroke="none" />
+                                <circle cx="111.2" cy="50" r="1.8" fill="currentColor" stroke="none" />
+                                <circle cx="119.6" cy="29.6" r="1.8" fill="currentColor" stroke="none" />
+                                <path d="M 90,390 C 130,300 200,200 240,110" stroke-width="2.5" />
+                                <g fill="currentColor" stroke-width="1">
+                                    <path d="M 120,325 C 150,315 170,290 170,290 C 150,305 130,315 120,325 Z" />
+                                    <path d="M 140,285 C 120,260 100,240 100,240 C 125,255 135,270 140,285 Z" />
+                                    <path d="M 155,255 C 190,245 210,210 210,210 C 185,230 165,245 155,255 Z" />
+                                    <path d="M 170,225 C 150,200 130,170 130,170 C 155,190 165,210 170,225 Z" />
+                                    <path d="M 185,195 C 220,185 245,150 245,150 C 215,170 195,185 185,195 Z" />
+                                    <path d="M 200,165 C 180,140 160,110 160,110 C 185,130 195,150 200,165 Z" />
+                                    <path d="M 220,140 C 245,130 270,95 270,95 C 245,115 230,130 220,140 Z" />
+                                </g>
+                                <path d="M 110,220 C 130,110 160,60 160,60 C 145,110 120,210 110,220 Z" fill="currentColor" stroke="currentColor" stroke-width="1"/>
+                                <path d="M 50,390 C 40,300 20,220 20,220" stroke-width="2" />
+                                <g fill="currentColor" stroke-width="1">
+                                    <path d="M 35,320 C 15,310 0,280 0,280 C 20,295 30,310 35,320 Z" />
+                                    <path d="M 25,270 C 45,260 60,230 60,230 C 40,245 30,260 25,270 Z" />
+                                </g>
+                                <circle cx="180" cy="80" r="2" fill="currentColor" stroke="none" />
+                                <circle cx="195" cy="65" r="1.5" fill="currentColor" stroke="none" />
+                                <circle cx="210" cy="90" r="1.5" fill="currentColor" stroke="none" />
+                                <circle cx="50" cy="140" r="1.5" fill="currentColor" stroke="none" />
+                                <circle cx="35" cy="160" r="1" fill="currentColor" stroke="none" />
+                            </g>
+                        </svg>
+                    </div>
+
+                    <div class="h-full w-[55%] flex flex-col items-center justify-between pr-5 pl-1 py-6 z-10 relative">
+                        <div class="flex flex-col items-center w-full">
+                            <h2 class="font-cursive text-wine text-[44px] tracking-wide leading-none">Recepción</h2>
+                            <p class="font-serif text-wine text-[5px] tracking-[0.1em] font-bold uppercase leading-tight text-center mt-2">
+                                Esperamos contar con su amable<br>presencia para celebrar en:
+                            </p>
+                        </div>
+                        
+                        <div class="flex flex-col items-center w-full">
+                            <h3 class="font-cursive text-wine text-[32px] tracking-wide leading-none">Salón El Dorado</h3>
+                            <p class="font-serif text-wine text-[7.5px] tracking-[0.15em] font-bold uppercase mt-2">
+                                HORA: 5:30 P.M.
+                            </p>
+                        </div>
+
+                        ${guestSectionHTML}
+                    </div>
+                `;
+
+                wrapper.appendChild(card);
+                container.appendChild(wrapper);
+                updateEmptyState();
+
+                guestNameInput.value = '';
+                companionCountInput.value = '0';
+                guestNameInput.focus();
+            });
+
+            const handleEnter = (e) => {
+                if (e.key === 'Enter') btnAdd.click();
+            };
+            guestNameInput.addEventListener('keypress', handleEnter);
+            companionCountInput.addEventListener('keypress', handleEnter);
+        });
+
+        function deletePass(btn) {
+            const wrapper = btn.closest('.card-wrapper');
+            wrapper.remove();
+            
+            const container = document.getElementById('passes-container');
+            const emptyState = document.getElementById('emptyState');
+            if (container.children.length === 0) {
+                emptyState.style.display = 'flex';
+            }
+        }
+
+        function downloadPassNatively(btn) {
+            const wrapper = btn.closest('.card-wrapper');
+            const actions = wrapper.querySelector('.card-actions');
+            const guestName = wrapper.dataset.guestname || 'Invitado';
+            
+            // 1. TRUCO PARA EL NOMBRE DEL ARCHIVO PDF: Cambiamos temporalmente el nombre de la pestaña
+            const originalTitle = document.title;
+            document.title = `Pase para ${guestName}`;
+            
+            // 2. Apagamos los botones para que no salgan en la foto
+            actions.style.display = 'none';
+            
+            // 3. Dejamos visible solo esta tarjeta
+            document.querySelectorAll('.card-wrapper').forEach(c => c.classList.remove('print-target'));
+            wrapper.classList.add('print-target');
+            
+            // 4. Se invoca la impresión del navegador
+            window.print();
+            
+            // 5. Devolvemos todo a la normalidad
+            wrapper.classList.remove('print-target');
+            actions.style.display = ''; 
+            document.title = originalTitle; // Regresamos el título al original
+        }
+    </script>
+</body>
+</html>
