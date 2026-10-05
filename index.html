@@ -2,7 +2,8 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Meta tag crucial para móviles -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Generador de Pases de Boda</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -42,8 +43,11 @@
             transition: all 0.2s ease;
         }
 
-        .pass-card:hover {
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        /* Hover desactivado en móviles por naturaleza, pero activo en PC */
+        @media (hover: hover) {
+            .pass-card:hover {
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            }
         }
 
         ::-webkit-scrollbar { width: 6px; }
@@ -51,6 +55,31 @@
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
+        /* ESCALADO INTELIGENTE PARA PANTALLAS MÓVILES */
+        /* Si la pantalla es menor a 500px, encogemos visualmente el pase pero conservamos su medida de impresión */
+        @media (max-width: 500px) {
+            .card-wrapper {
+                transform: scale(0.85);
+                transform-origin: top center;
+                margin-bottom: -1cm; /* Compensa el espacio sobrante del escalado */
+            }
+        }
+        @media (max-width: 400px) {
+            .card-wrapper {
+                transform: scale(0.72);
+                transform-origin: top center;
+                margin-bottom: -1.9cm;
+            }
+        }
+        @media (max-width: 350px) {
+            .card-wrapper {
+                transform: scale(0.65);
+                transform-origin: top center;
+                margin-bottom: -2.4cm;
+            }
+        }
+
+        /* CONFIGURACIÓN DE IMPRESIÓN NATURA (MÓVIL Y PC) */
         @media print {
             body { background-color: white !important; margin: 0; padding: 0; }
             body > *:not(main) { display: none !important; }
@@ -58,12 +87,17 @@
             #emptyState { display: none !important; }
             #passes-container { display: block !important; }
             
-            .pass-card { display: none !important; }
-            
-            /* Doble protección para ocultar botones en impresión */
+            /* Ocultamos envoltorios y botones */
+            .card-wrapper { display: none !important; }
             .card-actions { display: none !important; }
             
-            .pass-card.print-target {
+            /* Mostramos SOLAMENTE la tarjeta que queremos imprimir, sin escalas */
+            .card-wrapper.print-target { 
+                display: block !important; 
+                transform: none !important; 
+                margin: 0 !important;
+            }
+            .card-wrapper.print-target .pass-card {
                 display: flex !important;
                 position: absolute;
                 left: 0;
@@ -86,53 +120,54 @@
         }
     </style>
 </head>
-<body class="h-screen w-full flex flex-col md:flex-row bg-stone-100 font-sans overflow-hidden">
+<body class="min-h-screen w-full flex flex-col md:flex-row bg-stone-100 font-sans">
 
-    <aside class="w-full md:w-80 bg-white shadow-2xl z-20 flex flex-col h-full flex-shrink-0 border-r border-stone-200">
-        <div class="p-6 border-b border-stone-100 bg-stone-50/50">
-            <h1 class="text-3xl font-cursive font-bold text-wine">Pases de Boda</h1>
+    <!-- En móvil el panel se queda arriba, en PC se ancla a la izquierda -->
+    <aside class="w-full md:w-80 bg-white shadow-xl z-20 flex flex-col no-print flex-shrink-0 border-b md:border-b-0 md:border-r border-stone-200 md:h-screen md:sticky md:top-0">
+        <div class="p-5 md:p-6 border-b border-stone-100 bg-stone-50/50">
+            <h1 class="text-2xl md:text-3xl font-cursive font-bold text-wine">Pases de Boda</h1>
             <p class="text-[0.65rem] text-stone-500 mt-1 uppercase tracking-widest font-semibold font-serif">Panel Generador</p>
         </div>
 
-        <div class="p-6 flex-1 flex flex-col gap-5 overflow-y-auto relative">
+        <div class="p-5 md:p-6 flex-1 flex flex-col gap-4 md:gap-5 overflow-y-auto max-h-[50vh] md:max-h-none">
             <div id="toast" class="absolute top-4 left-6 right-6 bg-red-100 border border-red-200 text-red-700 px-3 py-2 rounded text-xs font-serif font-bold text-center opacity-0 transition-opacity duration-300 pointer-events-none">
                 Ingrese el nombre del invitado
             </div>
 
             <div>
-                <label for="guestName" class="block text-xs font-bold text-stone-700 mb-2 font-serif tracking-wider uppercase">Nombre del Invitado</label>
+                <label for="guestName" class="block text-[10px] md:text-xs font-bold text-stone-700 mb-1 md:mb-2 font-serif tracking-wider uppercase">Nombre del Invitado</label>
                 <input type="text" id="guestName" 
-                    class="w-full px-3 py-2.5 border border-stone-300 rounded focus:ring-1 focus:ring-wine focus:border-wine outline-none transition-colors font-serif text-sm"
+                    class="w-full px-3 py-2 md:py-2.5 border border-stone-300 rounded focus:ring-1 focus:ring-wine focus:border-wine outline-none transition-colors font-serif text-sm"
                     placeholder="Ej. Familia Hernández" autocomplete="off">
             </div>
 
             <div>
-                <label for="companionCount" class="block text-xs font-bold text-stone-700 mb-2 font-serif tracking-wider uppercase">Número de Acompañantes</label>
+                <label for="companionCount" class="block text-[10px] md:text-xs font-bold text-stone-700 mb-1 md:mb-2 font-serif tracking-wider uppercase">Número de Acompañantes</label>
                 <input type="number" id="companionCount" value="0" min="0"
-                    class="w-full px-3 py-2.5 border border-stone-300 rounded focus:ring-1 focus:ring-wine focus:border-wine outline-none transition-colors font-serif text-sm">
+                    class="w-full px-3 py-2 md:py-2.5 border border-stone-300 rounded focus:ring-1 focus:ring-wine focus:border-wine outline-none transition-colors font-serif text-sm">
             </div>
 
-            <button id="btnAdd" class="w-full bg-wine hover:bg-[#5a252b] text-white font-serif tracking-widest text-sm font-bold py-3 px-4 rounded shadow-md transition-all flex items-center justify-center gap-2 mt-2">
+            <button id="btnAdd" class="w-full bg-wine hover:bg-[#5a252b] text-white font-serif tracking-widest text-xs md:text-sm font-bold py-3 px-4 rounded shadow-md transition-all flex items-center justify-center gap-2 mt-1 md:mt-2">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                 </svg>
                 GENERAR TARJETA
             </button>
             
-            <p class="text-[0.65rem] text-stone-400 mt-auto text-center">Pasa el cursor sobre la tarjeta a la derecha para descargar su PDF individual.</p>
+            <p class="text-[10px] text-stone-400 mt-2 md:mt-auto text-center hidden md:block">Pasa el cursor sobre la tarjeta a la derecha para descargar su PDF.</p>
         </div>
     </aside>
 
-    <main class="flex-1 bg-stone-200/50 overflow-y-auto h-full p-8">
+    <main class="flex-1 bg-stone-200/50 p-4 md:p-8 min-h-[50vh] md:h-screen md:overflow-y-auto">
         
-        <div id="emptyState" class="h-full flex flex-col items-center justify-center text-stone-400 no-print">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mb-4 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div id="emptyState" class="h-full flex flex-col items-center justify-center text-stone-400 py-10 no-print">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 md:h-16 md:w-16 mb-4 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
             </svg>
-            <p class="font-serif tracking-widest text-sm text-stone-500">AÑADE PASES PARA COMENZAR</p>
+            <p class="font-serif tracking-widest text-[10px] md:text-sm text-stone-500">AÑADE PASES PARA COMENZAR</p>
         </div>
 
-        <div id="passes-container" class="flex flex-wrap gap-6 items-start justify-center">
+        <div id="passes-container" class="flex flex-wrap gap-4 md:gap-6 items-start justify-center">
             <!-- Pases generados dinámicamente -->
         </div>
     </main>
@@ -174,17 +209,22 @@
                     </div>
                 `;
 
+                // Añadimos el Wrapper escalable para móviles
+                const wrapper = document.createElement('div');
+                wrapper.className = 'card-wrapper w-full md:w-auto flex justify-center';
+                wrapper.dataset.guestname = rawName;
+
                 const card = document.createElement('div');
-                card.className = 'pass-card bg-cream group';
-                card.dataset.guestname = rawName;
+                card.className = 'pass-card bg-cream group mx-auto';
                 
+                // NOTA: Botones visibles 100% en móvil (opacity-100), ocultos hasta hover en PC (md:opacity-0)
                 card.innerHTML = `
-                    <div class="card-actions absolute top-2 right-2 flex flex-col gap-1.5 z-50 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                        <button onclick="downloadPassNatively(this)" title="Descargar como PDF" class="bg-white border border-stone-200 p-1.5 rounded-full shadow-sm hover:bg-stone-50 hover:text-wine text-stone-500 transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                    <div class="card-actions absolute top-2 right-2 flex flex-col gap-1.5 z-50 no-print opacity-100 md:opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                        <button onclick="downloadPassNatively(this)" title="Descargar como PDF" class="bg-white border border-stone-200 p-2 md:p-1.5 rounded-full shadow-md md:shadow-sm hover:bg-stone-50 hover:text-wine text-stone-500 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 md:h-3.5 md:w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                         </button>
-                        <button onclick="deletePass(this)" title="Eliminar" class="bg-white border border-stone-200 p-1.5 rounded-full shadow-sm hover:bg-red-50 hover:text-red-500 text-stone-500 transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                        <button onclick="deletePass(this)" title="Eliminar" class="bg-white border border-stone-200 p-2 md:p-1.5 rounded-full shadow-md md:shadow-sm hover:bg-red-50 hover:text-red-500 text-stone-500 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 md:h-3.5 md:w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                         </button>
                     </div>
 
@@ -251,7 +291,6 @@
                     </div>
 
                     <div class="h-full w-[55%] flex flex-col items-center justify-between pr-5 pl-1 py-6 z-10 relative">
-                        
                         <div class="flex flex-col items-center w-full">
                             <h2 class="font-cursive text-wine text-[44px] tracking-wide leading-none">Recepción</h2>
                             <p class="font-serif text-wine text-[5px] tracking-[0.1em] font-bold uppercase leading-tight text-center mt-2">
@@ -267,11 +306,11 @@
                         </div>
 
                         ${guestSectionHTML}
-
                     </div>
                 `;
 
-                container.appendChild(card);
+                wrapper.appendChild(card);
+                container.appendChild(wrapper);
                 updateEmptyState();
 
                 guestNameInput.value = '';
@@ -287,8 +326,8 @@
         });
 
         function deletePass(btn) {
-            const card = btn.closest('.pass-card');
-            card.remove();
+            const wrapper = btn.closest('.card-wrapper');
+            wrapper.remove();
             
             const container = document.getElementById('passes-container');
             const emptyState = document.getElementById('emptyState');
@@ -297,26 +336,23 @@
             }
         }
 
-        // FUNCIÓN CORREGIDA: Apaga físicamente los botones por código antes de imprimir
         function downloadPassNatively(btn) {
-            const card = btn.closest('.pass-card');
-            const actions = card.querySelector('.card-actions');
+            const wrapper = btn.closest('.card-wrapper');
+            const actions = wrapper.querySelector('.card-actions');
             
-            // 1. OCULTAMOS LOS BOTONES FÍSICAMENTE CON JS PARA QUE LA IMPRESORA NO LOS VEA
+            // Ocultar botones antes de enviar la orden de PDF
             actions.style.display = 'none';
             
-            // 2. Limpiamos cualquier tarjeta que se haya marcado antes
-            document.querySelectorAll('.pass-card').forEach(c => c.classList.remove('print-target'));
+            // Preparamos este contenedor único para ser el único visible
+            document.querySelectorAll('.card-wrapper').forEach(c => c.classList.remove('print-target'));
+            wrapper.classList.add('print-target');
             
-            // 3. Le ponemos la marca a la tarjeta actual para que sea la única que se imprima
-            card.classList.add('print-target');
-            
-            // 4. Se abre el cuadro de diálogo (El navegador toma la captura sin los botones)
+            // Esto llamará la ventana PDF (Móvil o Escritorio) usando el formato 11.5x7 limpio
             window.print();
             
-            // 5. Al cerrar el cuadro, restauramos todo a la normalidad
-            card.classList.remove('print-target');
-            actions.style.display = ''; // Volvemos a mostrar los botones para que los puedas seguir usando
+            // Limpieza y restauración al cerrar ventana
+            wrapper.classList.remove('print-target');
+            actions.style.display = ''; 
         }
     </script>
 </body>
